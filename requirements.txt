@@ -1,0 +1,6 @@
+streamlit==1.40.2            
+pypdf
+duckduckgo-search
+langgraph
+langchain-groq
+langchain-community
