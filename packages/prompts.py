@@ -1,4 +1,4 @@
-from langchain_groq import ChatGroq
+
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 
@@ -22,3 +22,31 @@ def make_chain(vectorstore, task: str):
         chain_type="stuff",
         chain_type_kwargs={"prompt": template}
     )
+
+analysis_configs = {
+    "Contract Review": {
+        "query": "Review this contract and identify key terms, obligations, and potential issues.",
+        "agents": ["Contract Analyst"],
+        "description": "Detailed contract analysis focusing on terms and obligations"
+    },
+    "Legal Research": {
+        "query": "Research relevant cases and precedents related to this document.",
+        "agents": ["Legal Researcher"],
+        "description": "Research on relevant legal cases and precedents"
+    },
+    "Risk Assessment": {
+        "query": "Analyze potential legal risks and liabilities in this document.",
+        "agents": ["Contract Analyst", "Legal Strategist"],
+        "description": "Combined risk analysis and strategic assessment"
+    },
+    "Compliance Check": {
+        "query": "Check this document for regulatory compliance issues.",
+        "agents": ["Legal Researcher", "Contract Analyst", "Legal Strategist"],
+        "description": "Comprehensive compliance analysis"
+    },
+    "Custom Query": {
+        "query": None,
+        "agents": ["Legal Researcher", "Contract Analyst", "Legal Strategist"],
+        "description": "Custom analysis using all available agents"
+    }
+}

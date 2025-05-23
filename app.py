@@ -59,31 +59,28 @@ def main():
         st.info("👈 Waiting for Qdrant connection...")
     elif not uploaded_file:
         st.info("👈 Please upload a legal document to begin analysis")
-    elif st.session_state.legal_team:
+    elif st.session_state.legal_ai:
         st.header("Document Analysis")
         st.info(f"📋 {analysis_configs[analysis_type]['description']}")
         st.write(f"🤖 Active Agents: {', '.join(analysis_configs[analysis_type]['agents'])}")
 
-        custom_query = st.text_area(
-            "Enter your specific query:",
-            help="Add any specific questions or points you want to analyze"
-        )
+        if analysis_type == "Custom Query":
+            custom_query = st.text_area(
+                "Enter your specific query:",
+                help="Add any specific questions or points you want to analyze"
+            )
+        else:
+            custom_query = ""
 
         if st.button("Run Analysis"):
             
-            graph = build_langgraph()
-            final_state = graph.invoke({
+            
+            final_state = st.session_state.legal_ai.invoke({
             "analysis_type": analysis_type,
             "custom_query": custom_query,
             "vectorstore": st.session_state.vectorstore
             })
             
-            st.subheader("Agent Responses:")
-            for agent, result in state["results"].items():
-                st.markdown(f"### {agent}")
-                st.markdown(result)
-
-                                    # Display results in tabs
             tabs = st.tabs(["Analysis", "Key Points", "Recommendations"])
 
 
