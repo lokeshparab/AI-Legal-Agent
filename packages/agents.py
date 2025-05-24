@@ -1,18 +1,29 @@
 from langgraph.graph import StateGraph, END, START
+from langgraph.graph.state import add_state
 # from langgraph.graph.schema import TypedState
 from langchain_groq import ChatGroq
-from typing import TypedDict, Optional
-from langchain_core.runnables import RunnablePassthrough
+from typing import TypedDict, Optional, Annotated, Any
+from langchain_core.runnables import RunnablePassthrough, RunnableMap, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
 from packages.prompts import agent_prompts, task_prompts, analysis_configs
 
+# class AgentState(TypedDict):
+#     analysis_type: str
+#     # tab_type:str
+#     custom_query: Optional[str]
+#     vectorstore: any
+#     results: Optional[dict] = {}
+#     reports: Optional[dict] = {}
+
+def merge_dicts(a: dict, b: dict) -> dict:
+    return {**a, **b}
+
 class AgentState(TypedDict):
     analysis_type: str
-    tab_type:str
     custom_query: Optional[str]
-    vectorstore: any
-    results: Optional[dict]
-    reports: Optional[dict]
+    vectorstore: Any
+    results: Annotated[dict[str, str], merge_dicts]
+    reports: Annotated[dict[str, str], merge_dicts]
 
 def get_llm():
     return ChatGroq(model="llama3-70b-8192")
@@ -37,24 +48,38 @@ def agentic_rag(vectorstore, task: str,custom_query:str):
 
     return agentic_rag.invoke(custom_query)
 
-def agentic_task(response:dict|str,task:str,agents:list[str]):
+def agentic_task(response,task:str,agents:list[str]):
     def format_docs(docs:dict):
         return "\n\n".join(f"{agent}:\n {result}" for agent,result in docs.items())
     
     llm = get_llm()
+    print("Task name",task)
 
     task_prompt = task_prompts[task]
+
+    # Combine inputs properly using RunnableMap
+    # input_mapper = RunnableMap({
+    #     "response": RunnablePassthrough(),
+    #     "agents": RunnableLambda(lambda _: ", ".join(agents))
+    # })
+    response_query = response if isinstance(response,str) else format_docs(response)
+
     agentic_task = (
+        # {
+        #     "response": RunnablePassthrough(),
+        #     "agents":  RunnableLambda(lambda _: ", ".join(agents))
+        # }
         {
-            "response": RunnablePassthrough(),
-            "agents": ", ".join(agents)
+            "response": response_query,
+            "agents":  ", ".join(agents)
         }
+        # input_mapper 
         | task_prompt
         | llm
         | StrOutputParser()
     )
 
-    response_query = response if isinstance(response,str) else format_docs(response)
+    
 
     return agentic_task.invoke(response_query)
 
@@ -65,7 +90,7 @@ def coordinator(state: AgentState):
     if not config:
         raise ValueError(f"Invalid analysis type: {state['analysis_type']}")
 
-    state["custom_query"] = state["custom_query"] if state["analysis_type"] == "Custom Query" else analysis_configs["query"]
+    state["custom_query"] = state["custom_query"] if state["analysis_type"] == "Custom Query" else config["query"]
 
     agent_routes = []
     for agent in config["agents"]:
@@ -79,7 +104,7 @@ def coordinator(state: AgentState):
 
 
 def run_contract(state: AgentState):
-
+    print("Agent Contract Analyst")
     return {
         "reports": {
             "Contract Analyst": agentic_rag(
@@ -92,7 +117,7 @@ def run_contract(state: AgentState):
     # return {"results": {"Contract Analyst": chain.run(state["query"])}}
 
 def run_research(state: AgentState):
-
+    print("Agent Legal Researcher")
     return {
         "results": {
             "Legal Researcher": agentic_rag(
@@ -105,7 +130,7 @@ def run_research(state: AgentState):
 
 def run_strategy(state: AgentState):
    
-
+    print("Agent Legal Strategist")
     return {
         "results": {
             "Legal Strategist": agentic_rag(
@@ -116,6 +141,8 @@ def run_strategy(state: AgentState):
     }
 
 def detail_analysis(state: AgentState):
+    print("Agent Detail Analysis")
+    print(state["results"])
     return {
         "reports": {
             "details": agentic_task(
@@ -127,6 +154,8 @@ def detail_analysis(state: AgentState):
     }
 
 def summary_analysis(state: AgentState):
+    print("Agent Summary Analysis")
+    print(state["reports"])
     return {
         "reports": {
             "summary": agentic_task(
@@ -138,6 +167,8 @@ def summary_analysis(state: AgentState):
     }
 
 def recommendation_analysis(state: AgentState):
+    print("Agent Recommendation Analysis")
+    print(state["reports"])
     return {
         "reports": {
             "recommendation": agentic_task(
