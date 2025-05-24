@@ -14,7 +14,7 @@ def load_document_to_faiss(uploaded_file):
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         chunks = splitter.split_documents(docs)
 
-        embedding = HuggingFaceEmbeddings(model_name="jinaai/jina-embeddings-v2-base-en")
+        embedding = HuggingFaceEmbeddings(model_name="jinaai/jina-embeddings-v2-base-en", model_kwargs={'trust_remote_code': True})
         vectorstore = FAISS.from_documents(chunks, embedding)
 
         return vectorstore

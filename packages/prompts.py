@@ -1,27 +1,64 @@
 
 from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
+from langchain.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.messages import SystemMessage, HumanMessage
 
-def get_llm():
-    return ChatGroq(groq_api_key="your-key", model="mixtral-8x7b-32768")
 
-def make_chain(vectorstore, task: str):
-    prompts = {
-        "contract": "You are a contract analyst. {question}",
-        "research": "You are a legal researcher. {question}",
-        "strategy": "You are a legal strategist. {question}"
-    }
+research_prompt =  (
+    "You are a contract analyst.\n Who will do following things:\n"
+    "- Find and cite relevant legal cases and precedents.\n"
+    "- Provide detailed research summaries with sources.\n"
+    "- Reference specific sections from the uploaded document.\n"
+    "- Always search the knowledge base for relevant information.\n\n"
+)
 
-    template = PromptTemplate.from_template(prompts[task])
-    llm = get_llm()
-    retriever = vectorstore.as_retriever()
+contract_prompt = (
+    "You are a legal researcher.\n Who will do following things:\n"
+    "Analyze key terms, obligations, and potential issues.\n"
+    "Identify potential legal risks and liabilities.\n"
+    "Reference specific sections from the uploaded document.\n"
+    "Always search the knowledge base for relevant information.\n\n"
+    
+)
 
-    return RetrievalQA.from_chain_type(
-        llm=llm,
-        retriever=retriever,
-        chain_type="stuff",
-        chain_type_kwargs={"prompt": template}
-    )
+strategy_prompt = (
+    "You are a legal strategist.\n Who will do following things:\n"
+    "Develop strategic recommendations for legal compliance.\n"
+    "Identify potential legal risks and liabilities.\n"
+    "Reference specific sections from the uploaded document.\n"
+    "Always search the knowledge base for relevant information.\n\n"
+    
+)
+
+retrival_prompt = (
+    " Use the following pieces of retrieved context to answer the question." \
+    "If you don't know the answer, just say that you don't know, don't try to make up an answer.\n"
+    "question: {question}\n"
+    "context: {context}\n"
+    "answer:"
+)
+
+agent_prompts = {
+    "contract": ChatPromptTemplate(
+        messages=[
+            SystemMessage(content=contract_prompt),
+            HumanMessage(content=retrival_prompt)
+        ]
+    ),
+    "research": ChatPromptTemplate(
+        messages=[
+            SystemMessage(content=research_prompt),
+            HumanMessage(content=retrival_prompt)
+        ]
+    ),
+    "strategy": ChatPromptTemplate(
+        messages=[
+            SystemMessage(content=strategy_prompt),
+            HumanMessage(content=retrival_prompt)
+        ]
+    ),
+}
+
 
 analysis_configs = {
     "Contract Review": {
@@ -49,4 +86,43 @@ analysis_configs = {
         "agents": ["Legal Researcher", "Contract Analyst", "Legal Strategist"],
         "description": "Custom analysis using all available agents"
     }
+}
+
+detail_prompt = ChatPromptTemplate(
+    messages=[
+        HumanMessage(
+            "Based on this previous analysis:\n"
+            "{response}\n\n"
+            "Please provide a comprehensive detailed analysis.\n"
+            "Focus on insights from: {agents}"""
+        )
+    ]
+)
+
+summary_prompt = ChatPromptTemplate(
+    messages=[
+        HumanMessage(
+            "Based on this previous analysis:\n"
+            "{response}\n\n"
+            "Please summarize the key points in bullet points.\n"
+            "Focus on insights from: {agents}"""
+        )
+    ]
+)
+
+recommendation_prompt = ChatPromptTemplate(
+    messages=[
+        HumanMessage(
+            "Based on this previous analysis:\n"
+            "{response}\n\n"
+            "What are your key recommendations based on the analysis, the best course of action?\n"
+            "Focus on insights from: {agents}"""
+        )
+    ]
+)
+
+task_prompts = {
+    "detail": detail_prompt,
+    "summary": summary_prompt,
+    "recommendation": recommendation_prompt
 }

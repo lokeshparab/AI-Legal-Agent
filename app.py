@@ -5,6 +5,8 @@ from packages.prompts import analysis_configs
 
 def init_session_state():
     if 'groq_api_key' not in st.session_state:
+        st.session_state.groq_api_key = None
+    if 'vector_db' not in st.session_state:
         st.session_state.vector_db = None
 
 def main():
@@ -15,15 +17,15 @@ def main():
     with st.sidebar:
         st.header("🔑 API Configuration")
    
-        groq_api_key = st.text_input(
-            "OpenAI API Key",
+        st.session_state.groq_api_key = st.text_input(
+            "Groq API Key",
             type="password",
-            value=st.session_state.openai_api_key if st.session_state.openai_api_key else "",
+            value=st.session_state.groq_api_key if st.session_state.groq_api_key else "",
             help="Enter your OpenAI API key"
         )
-        if groq_api_key:
-            os.environ["GROQ_API_KEY"] = groq_api_key
-        else:
+        if st.session_state.groq_api_key:
+            os.environ["GROQ_API_KEY"] = st.session_state.groq_api_key
+        elif "GROQ_API_KEY" in os.environ:
             del os.environ["GROQ_API_KEY"]
 
         st.divider()
@@ -56,7 +58,7 @@ def main():
 
             # Main content area
     if not st.session_state.vector_db:
-        st.info("👈 Waiting for Qdrant connection...")
+        st.info("👈 Waiting for connection...")
     elif not uploaded_file:
         st.info("👈 Please upload a legal document to begin analysis")
     elif st.session_state.legal_ai:
@@ -76,54 +78,37 @@ def main():
             
             
             final_state = st.session_state.legal_ai.invoke({
-            "analysis_type": analysis_type,
-            "custom_query": custom_query,
-            "vectorstore": st.session_state.vectorstore
+                "analysis_type": analysis_type,
+                "custom_query": custom_query,
+                "vectorstore": st.session_state.vectorstore
             })
             
             tabs = st.tabs(["Analysis", "Key Points", "Recommendations"])
 
-
+            response = final_state["reports"]
+            print(response)
             with tabs[0]:
                 st.markdown("### Detailed Analysis")
-                if response.content:
-                    st.markdown(response.content)
+                if "details" in response:
+                    st.markdown(response['details'])
                 else:
-                    for message in response.messages:
-                        if message.role == 'assistant' and message.content:
-                            st.markdown(message.content)
+                    st.markdown("No detailed analysis available for this analysis type.")
             
             with tabs[1]:
                 st.markdown("### Key Points")
-                key_points_response = st.session_state.legal_team.run(
-                    f"""Based on this previous analysis:    
-                    {response.content}
-                    
-                    Please summarize the key points in bullet points.
-                    Focus on insights from: {', '.join(analysis_configs[analysis_type]['agents'])}"""
-                )
-                if key_points_response.content:
-                    st.markdown(key_points_response.content)
+                
+                if "summary" in response:
+                    st.markdown(response['summary'])
                 else:
-                    for message in key_points_response.messages:
-                        if message.role == 'assistant' and message.content:
-                            st.markdown(message.content)
+                    st.markdown("No detailed analysis available for this analysis type.")
             
             with tabs[2]:
                 st.markdown("### Recommendations")
-                recommendations_response = st.session_state.legal_team.run(
-                    f"""Based on this previous analysis:
-                    {response.content}
-                    
-                    What are your key recommendations based on the analysis, the best course of action?
-                    Provide specific recommendations from: {', '.join(analysis_configs[analysis_type]['agents'])}"""
-                )
-                if recommendations_response.content:
-                    st.markdown(recommendations_response.content)
+                
+                if "recommendation" in response:
+                    st.markdown(response['recommendation'])
                 else:
-                    for message in recommendations_response.messages:
-                        if message.role == 'assistant' and message.content:
-                            st.markdown(message.content)
+                    st.markdown("No detailed analysis available for this analysis type.")
 
 if __name__ == "__main__":
     
