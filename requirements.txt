@@ -1,9 +1,9 @@
 streamlit==1.40.2            
 pypdf
-duckduckgo-search
 langgraph
 langchain-groq
 langchain-community
 langchain-huggingface
-faiss-cpu
+langchain-pinecone
+pinecone
 hf_xet

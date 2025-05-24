@@ -8,6 +8,8 @@ def init_session_state():
         st.session_state.groq_api_key = None
     if 'vector_db' not in st.session_state:
         st.session_state.vector_db = None
+    if 'pinecone_api_key' not in st.session_state:
+        st.session_state.pinecone_api_key = None
 
 def main():
     init_session_state()
@@ -23,38 +25,61 @@ def main():
             value=st.session_state.groq_api_key if st.session_state.groq_api_key else "",
             help="Enter your OpenAI API key"
         )
+
         if st.session_state.groq_api_key:
             os.environ["GROQ_API_KEY"] = st.session_state.groq_api_key
-        elif "GROQ_API_KEY" in os.environ:
-            del os.environ["GROQ_API_KEY"]
 
+        hf_token = st.text_input(
+            "Hugging Face API Key",
+            type="password",
+            value= "",
+            help="Enter your Huggingface API key"
+        )
+
+        if hf_token:
+            os.environ["HF_TOKEN"] = hf_token
+        
+        st.session_state.pinecone_api_key = st.text_input(
+            "Pinecone API Key",
+            type="password",
+            value= "",
+            help="Enter your Pinecone API key"
+        )
+
+        if st.session_state.pinecone_api_key:
+            os.environ["PINECONE_API_KEY"] = st.session_state.pinecone_api_key
+
+        
         st.divider()
 
-        # Document upload section
-        st.header("📄 Document Upload")
-        uploaded_file = st.file_uploader("Upload Legal Document", type=['pdf'])
+        if st.session_state.pinecone_api_key:
+            # Document upload section
+            st.header("📄 Document Upload")
+            uploaded_file = st.file_uploader("Upload Legal Document", type=['pdf'])
 
-        if uploaded_file:
-            with st.spinner("Processing document..."):
-                try:
-                    st.session_state.vectorstore = load_document_to_faiss(uploaded_file)
-                    
-                except Exception as e:
-                        st.error(f"Error processing document: {str(e)}")
+            if uploaded_file:
+                with st.spinner("Processing document..."):
+                    try:
+                        st.session_state.vectorstore = load_document_to_faiss(uploaded_file)
+                        
+                    except Exception as e:
+                            st.error(f"Error processing document: {str(e)}")
 
-            st.divider()
-            st.header("🔍 Analysis Options")
-            analysis_type = st.selectbox(
-                "Select Analysis Type",
-                [
-                    "Contract Review",
-                    "Legal Research",
-                    "Risk Assessment",
-                    "Compliance Check",
-                    "Custom Query"
-                ]
-            )
-            st.session_state.legal_ai = build_langgraph()
+                st.divider()
+                st.header("🔍 Analysis Options")
+                analysis_type = st.selectbox(
+                    "Select Analysis Type",
+                    [
+                        "Contract Review",
+                        "Legal Research",
+                        "Risk Assessment",
+                        "Compliance Check",
+                        "Custom Query"
+                    ]
+                )
+                st.session_state.legal_ai = build_langgraph()
+        else:
+            st.info("Enter Pinecone API key to upload documents")
 
             # Main content area
     if not st.session_state.vector_db:
