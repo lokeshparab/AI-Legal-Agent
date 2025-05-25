@@ -61,7 +61,8 @@ A Streamlit application that simulates a full-service legal team using multiple 
 ## Notes
 
 - Supports PDF documents only
-- Uses GPT-4o for analysis
-- Uses text-embedding-3-small for embeddings
+- Uses `LLaMA3-8B-8192` for analysis
+- Uses Jina Embedding model `jina-embeddings-v2-base-en` for embeddings
 - Requires stable internet connection
-- API usage costs apply
+- API are free with limitations for both `Groq` and `Jina`
+- Paid API usage costs apply
