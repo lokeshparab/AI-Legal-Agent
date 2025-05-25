@@ -2,7 +2,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain_pinecone import PineconeVectorStore
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings, JinaEmbeddings
 import tempfile, os, time
 from pinecone import Pinecone, ServerlessSpec
 
@@ -10,11 +10,18 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def load_document_to_pinecone(uploaded_file):
+def load_document_to_pinecone(uploaded_file):  
+    """
+    Load a PDF document into Pinecone.
 
-    # Initialize Pinecone
+    Args:
+        uploaded_file (bytes): A PDF file.
+
+    Returns:
+        PineconeVectorStore: A vector store of the document.
+    """
     
-
+    # Initialize Pinecone
     pc = Pinecone()
     # Define your index name
     INDEX_NAME = "legal-doc-index"
@@ -45,11 +52,9 @@ def load_document_to_pinecone(uploaded_file):
         chunks = splitter.split_documents(docs)
 
         print("-"*80,"Load Embedding","-"*80)
-        # Embed documents
-        embedding = HuggingFaceEmbeddings(
-            # model_name="jinaai/jina-embeddings-v2-base-en", 
-            model_name = "all-MiniLM-L6-v2",
-            model_kwargs={'trust_remote_code': True}
+        # Load Embedding
+        embedding = JinaEmbeddings(
+            jina_api_key=os.environ.get("JINA_API_KEY")
         )
         # Load into Pinecone
         index_name = pc.Index(INDEX_NAME)
@@ -67,7 +72,16 @@ def load_document_to_pinecone(uploaded_file):
         return vectorstore
 
 
-def load_document_to_faiss(uploaded_file):
+def load_document_to_faiss(uploaded_file):  
+    """
+    Load a PDF document into a FAISS vector store.
+
+    Args:
+        uploaded_file (bytes): A PDF file.
+
+    Returns:
+        FAISS: A vector store of the document.
+    """
 
     # Get Upload Documents
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -82,11 +96,9 @@ def load_document_to_faiss(uploaded_file):
         chunks = splitter.split_documents(docs)
 
         print("-"*80,"Load Embedding","-"*80)
-        # Embed documents
-        embedding = HuggingFaceEmbeddings(
-            # model_name="jinaai/jina-embeddings-v2-base-en", 
-            model_name = "all-MiniLM-L6-v2",
-            model_kwargs={'trust_remote_code': True}
+        # Load Embedding
+        embedding = JinaEmbeddings(
+            jina_api_key=os.environ.get("JINA_API_KEY")
         )
         # Load into FAISS
         print("-"*80,"Ingesting Vector DB","-"*80)

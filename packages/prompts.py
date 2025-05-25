@@ -1,8 +1,7 @@
 
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate, ChatPromptTemplate
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain.prompts import ChatPromptTemplate
 
+####################################### Agentic RAG prompts ###################################################
 
 research_prompt =  (
     "You are a contract analyst.\n Who will do following things:\n"
@@ -41,25 +40,26 @@ retrival_prompt = (
 agent_prompts = {
     "contract": ChatPromptTemplate(
         messages=[
-            SystemMessage(content=contract_prompt),
-            HumanMessage(content=retrival_prompt)
+            ("system",contract_prompt),
+            ("human",retrival_prompt)
         ]
+        
     ),
     "research": ChatPromptTemplate(
         messages=[
-            SystemMessage(content=research_prompt),
-            HumanMessage(content=retrival_prompt)
+            ("system",research_prompt),
+            ("human",retrival_prompt)
         ]
     ),
     "strategy": ChatPromptTemplate(
         messages=[
-            SystemMessage(content=strategy_prompt),
-            HumanMessage(content=retrival_prompt)
+            ("system",strategy_prompt),
+            ("human",retrival_prompt)
         ]
     ),
 }
 
-
+####################################### Analysis prompts and Details ###################################################
 analysis_configs = {
     "Contract Review": {
         "query": "Review this contract and identify key terms, obligations, and potential issues.",
@@ -88,9 +88,13 @@ analysis_configs = {
     }
 }
 
+
+####################################### Agentic Tasks prompts ###################################################
+
 detail_prompt = ChatPromptTemplate(
     messages=[
-        HumanMessage(
+        (
+            "human",
             "Based on this previous analysis:\n"
             "{response}\n\n"
             "Please provide a comprehensive detailed analysis.\n"
@@ -101,7 +105,8 @@ detail_prompt = ChatPromptTemplate(
 
 summary_prompt = ChatPromptTemplate(
     messages=[
-        HumanMessage(
+        (
+            "human",
             "Based on this previous analysis:\n"
             "{response}\n\n"
             "Please summarize the key points in bullet points.\n"
@@ -112,11 +117,13 @@ summary_prompt = ChatPromptTemplate(
 
 recommendation_prompt = ChatPromptTemplate(
     messages=[
-        HumanMessage(
+        (
+            "human",
             "Based on this previous analysis:\n"
             "{response}\n\n"
             "What are your key recommendations based on the analysis, the best course of action?\n"
             "Focus on insights from: {agents}"""
+
         )
     ]
 )
