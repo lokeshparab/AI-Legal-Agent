@@ -1,4 +1,4 @@
-# 👨‍⚖️ AI Legal Agent Team
+# 👨‍⚖️ AI Legal Agent Team (using LangGraph)
 
 A Streamlit application that simulates a full-service legal team using multiple AI agents to analyze legal documents and provide comprehensive legal insights. Each agent represents a different legal specialist role, from research and contract analysis to strategic planning, working together to provide thorough legal analysis and recommendations.
 
@@ -49,7 +49,7 @@ A Streamlit application that simulates a full-service legal team using multiple 
 
 3. **Run the Application**
    ```bash
-   streamlit run legal_agent_team.py
+   streamlit run app.py
    ```
 4. **Use the Interface**
    - Enter API credentials
